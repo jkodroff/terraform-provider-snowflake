@@ -88,7 +88,7 @@ func TestInt_DatabasesCreate(t *testing.T) {
 		assert.Equal(t, 1, database.RetentionTime)
 		// MAX_DATA_EXTENSION_IN_DAYS is an object parameter, not in Database object
 		param, err := client.Sessions.ShowObjectParameter(ctx, "MAX_DATA_EXTENSION_TIME_IN_DAYS", ObjectTypeDatabase, databaseID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "1", param.Value)
 
 		// verify tags
