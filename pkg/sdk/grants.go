@@ -21,7 +21,7 @@ type Grants interface {
 	// todo: GrantPrivilegesToDatabaseRole and RevokePrivilegesFromDatabaseRole
 	GrantPrivilegeToShare(ctx context.Context, privilege ObjectPrivilege, on *GrantPrivilegeToShareOn, to AccountObjectIdentifier) error
 	RevokePrivilegeFromShare(ctx context.Context, privilege ObjectPrivilege, on *RevokePrivilegeFromShareOn, from AccountObjectIdentifier) error
-	Show(ctx context.Context, opts *ShowGrantOptions) ([]*Grant, error)
+	Show(ctx context.Context, opts *ShowGrantOptions) ([]Grant, error)
 }
 
 var _ Grants = (*grants)(nil)
@@ -58,7 +58,7 @@ type grantRow struct {
 	GrantedBy   string    `db:"granted_by"`
 }
 
-func (row *grantRow) toGrant() (*Grant, error) {
+func (row *grantRow) toGrant() Grant {
 	grantedTo := ObjectType(strings.ReplaceAll(row.GrantedTo, "_", " "))
 	granteeName := NewAccountObjectIdentifier(row.GranteeName)
 	if grantedTo == ObjectTypeShare {
@@ -66,7 +66,7 @@ func (row *grantRow) toGrant() (*Grant, error) {
 		name := strings.Join(parts[1:], ".")
 		granteeName = NewAccountObjectIdentifier(name)
 	}
-	grant := &Grant{
+	grant := Grant{
 		CreatedOn:   row.CreatedOn,
 		Privilege:   row.Privilege,
 		GrantedTo:   grantedTo,
@@ -84,7 +84,7 @@ func (row *grantRow) toGrant() (*Grant, error) {
 	if row.GrantOn != "" {
 		grant.GrantOn = ObjectType(strings.ReplaceAll(row.GrantOn, "_", " "))
 	}
-	return grant, nil
+	return grant
 }
 
 type GrantPrivilegesToAccountRoleOptions struct {
@@ -469,7 +469,7 @@ type ShowGrantsOf struct {
 	Share AccountObjectIdentifier `ddl:"identifier" sql:"SHARE"`
 }
 
-func (v *grants) Show(ctx context.Context, opts *ShowGrantOptions) ([]*Grant, error) {
+func (v *grants) Show(ctx context.Context, opts *ShowGrantOptions) ([]Grant, error) {
 	if opts == nil {
 		opts = &ShowGrantOptions{}
 	}
@@ -485,13 +485,9 @@ func (v *grants) Show(ctx context.Context, opts *ShowGrantOptions) ([]*Grant, er
 	if err != nil {
 		return nil, err
 	}
-	grants := make([]*Grant, 0, len(rows))
+	grants := make([]Grant, 0, len(rows))
 	for _, row := range rows {
-		grant, err := row.toGrant()
-		if err != nil {
-			return nil, err
-		}
-		grants = append(grants, grant)
+		grants = append(grants, row.toGrant())
 	}
 	return grants, nil
 }

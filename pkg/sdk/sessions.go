@@ -14,7 +14,7 @@ var (
 type Sessions interface {
 	// Parameters
 	AlterSession(ctx context.Context, opts *AlterSessionOptions) error
-	ShowParameters(ctx context.Context, opts *ShowParametersOptions) ([]*Parameter, error)
+	ShowParameters(ctx context.Context, opts *ShowParametersOptions) ([]Parameter, error)
 	ShowAccountParameter(ctx context.Context, parameter AccountParameter) (*Parameter, error)
 	ShowSessionParameter(ctx context.Context, parameter SessionParameter) (*Parameter, error)
 	ShowUserParameter(ctx context.Context, parameter UserParameter, user AccountObjectIdentifier) (*Parameter, error)
@@ -152,8 +152,8 @@ type parameterRow struct {
 	Description sql.NullString `db:"description"`
 }
 
-func (row *parameterRow) toParameter() *Parameter {
-	return &Parameter{
+func (row *parameterRow) toParameter() Parameter {
+	return Parameter{
 		Key:         row.Key.String,
 		Value:       row.Value.String,
 		Default:     row.Default.String,
@@ -162,7 +162,7 @@ func (row *parameterRow) toParameter() *Parameter {
 	}
 }
 
-func (v *sessions) ShowParameters(ctx context.Context, opts *ShowParametersOptions) ([]*Parameter, error) {
+func (v *sessions) ShowParameters(ctx context.Context, opts *ShowParametersOptions) ([]Parameter, error) {
 	if opts == nil {
 		opts = &ShowParametersOptions{}
 	}
@@ -173,12 +173,12 @@ func (v *sessions) ShowParameters(ctx context.Context, opts *ShowParametersOptio
 	if err != nil {
 		return nil, err
 	}
-	rows := []parameterRow{}
+	var rows []parameterRow
 	err = v.client.query(ctx, &rows, sql)
 	if err != nil {
 		return nil, err
 	}
-	parameters := make([]*Parameter, len(rows))
+	parameters := make([]Parameter, len(rows))
 	for i, row := range rows {
 		parameters[i] = row.toParameter()
 	}
@@ -201,7 +201,7 @@ func (v *sessions) ShowAccountParameter(ctx context.Context, parameter AccountPa
 	if len(parameters) == 0 {
 		return nil, fmt.Errorf("parameter %s not found", parameter)
 	}
-	return parameters[0], nil
+	return &parameters[0], nil
 }
 
 func (v *sessions) ShowSessionParameter(ctx context.Context, parameter SessionParameter) (*Parameter, error) {
@@ -220,7 +220,7 @@ func (v *sessions) ShowSessionParameter(ctx context.Context, parameter SessionPa
 	if len(parameters) == 0 {
 		return nil, fmt.Errorf("parameter %s not found", parameter)
 	}
-	return parameters[0], nil
+	return &parameters[0], nil
 }
 
 func (v *sessions) ShowUserParameter(ctx context.Context, parameter UserParameter, user AccountObjectIdentifier) (*Parameter, error) {
@@ -239,7 +239,7 @@ func (v *sessions) ShowUserParameter(ctx context.Context, parameter UserParamete
 	if len(parameters) == 0 {
 		return nil, fmt.Errorf("parameter %s not found", parameter)
 	}
-	return parameters[0], nil
+	return &parameters[0], nil
 }
 
 func (v *sessions) ShowObjectParameter(ctx context.Context, key ObjectParameter, objectType ObjectType, objectID Identifier) (*Parameter, error) {
@@ -270,7 +270,7 @@ func (v *sessions) ShowObjectParameter(ctx context.Context, key ObjectParameter,
 	if len(parameters) == 0 {
 		return nil, fmt.Errorf("parameter %s not found", key)
 	}
-	return parameters[0], nil
+	return &parameters[0], nil
 }
 
 // Context

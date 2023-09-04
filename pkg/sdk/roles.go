@@ -13,7 +13,7 @@ type Roles interface {
 	// Drop removes a role.
 	Drop(ctx context.Context, id AccountObjectIdentifier, opts *RoleDropOptions) error
 	// Show returns a list of roles.
-	Show(ctx context.Context, opts *RoleShowOptions) ([]*Role, error)
+	Show(ctx context.Context, opts *RoleShowOptions) ([]Role, error)
 	// ShowByID returns a user by ID
 	ShowByID(ctx context.Context, id AccountObjectIdentifier) (*Role, error)
 	// Grant grants privileges on a role.
@@ -72,7 +72,7 @@ func (v *roles) Drop(ctx context.Context, id AccountObjectIdentifier, opts *Role
 // RoleShowOptions contains options for listing roles.
 type RoleShowOptions struct{}
 
-func (v *roles) Show(ctx context.Context, opts *RoleShowOptions) ([]*Role, error) {
+func (v *roles) Show(ctx context.Context, opts *RoleShowOptions) ([]Role, error) {
 	var rows []Role
 	sql := `SHOW ROLES`
 	err := v.client.query(ctx, &rows, sql)
@@ -80,10 +80,9 @@ func (v *roles) Show(ctx context.Context, opts *RoleShowOptions) ([]*Role, error
 		return nil, err
 	}
 
-	roles := make([]*Role, len(rows))
+	roles := make([]Role, len(rows))
 	for i, row := range rows {
-		var role Role = row
-		roles[i] = &role
+		roles[i] = row
 	}
 
 	return roles, nil
